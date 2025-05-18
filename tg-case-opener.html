@@ -6,288 +6,610 @@
     <title>TG Case Opener</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* Previous CSS remains the same, add these new styles */
-        .profile-gifts {
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e0033, #3a0068);
+            color: white;
+            margin: 0;
+            padding: 0;
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 20px;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
         }
-        .gift-badge {
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .balance {
             background: rgba(255, 255, 255, 0.1);
-            padding: 8px;
-            border-radius: 10px;
+            padding: 10px 15px;
+            border-radius: 20px;
             display: flex;
             align-items: center;
-            gap: 5px;
         }
-        .payment-modal {
+        
+        .star-icon {
+            color: gold;
+            margin-right: 5px;
+        }
+        
+        .cases-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .case {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        .case:hover {
+            transform: scale(1.05);
+        }
+        
+        .case-image {
+            width: 100%;
+            height: 120px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            margin-bottom: 10px;
+        }
+        
+        .case-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .case-price {
+            color: gold;
+            font-size: 14px;
+        }
+        
+        .roulette-container {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 1000;
-            justify-content: center;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 100;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
         }
-        .payment-content {
-            background: #2a2a2a;
+        
+        .roulette {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        
+        .roulette-item {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: bottom right;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            padding-left: 30px;
+        }
+        
+        .roulette-item-image {
+            width: 50px;
+            height: 50px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        
+        .result {
+            display: none;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
             padding: 20px;
             border-radius: 15px;
-            width: 80%;
-            max-width: 400px;
+            max-width: 80%;
         }
-        .stars-packages {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+        
+        .result-image {
+            width: 100px;
+            height: 100px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            margin: 0 auto 15px;
+        }
+        
+        .result-name {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .result-value {
+            color: gold;
+            margin-bottom: 20px;
+        }
+        
+        .buttons {
+            display: flex;
             gap: 10px;
-            margin: 15px 0;
+            justify-content: center;
         }
-        .stars-package {
-            background: rgba(255, 215, 0, 0.1);
-            border: 1px solid gold;
+        
+        button {
+            background: #6a3bb5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .inventory-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        
+        .inventory {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 100;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        .inventory-header {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .inventory-items {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+            overflow-y: auto;
+            max-height: 80vh;
+        }
+        
+        .inventory-item {
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
             padding: 10px;
             text-align: center;
+        }
+        
+        .inventory-item-image {
+            width: 60px;
+            height: 60px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            margin: 0 auto 5px;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
             cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <!-- Previous HTML remains the same, add these new elements -->
-    <div class="payment-modal" id="paymentModal">
-        <div class="payment-content">
-            <h2>Пополнить баланс</h2>
-            <p>Выберите пакет звёзд:</p>
-            <div class="stars-packages" id="starsPackages">
-                <!-- Packages will be added via JS -->
+    <div class="container">
+        <div class="header">
+            <h1>Кейсы с подарками</h1>
+            <div class="balance">
+                <span class="star-icon">★</span>
+                <span id="balance">0</span>
             </div>
-            <button id="closePaymentModal">Отмена</button>
+        </div>
+        
+        <div class="cases-container" id="casesContainer">
+            <!-- Кейсы будут добавлены через JS -->
         </div>
     </div>
-
+    
+    <div class="roulette-container" id="rouletteContainer">
+        <div class="roulette" id="roulette">
+            <!-- Рулетка будет добавлена через JS -->
+        </div>
+    </div>
+    
+    <div class="result" id="result">
+        <div class="result-image" id="resultImage"></div>
+        <div class="result-name" id="resultName"></div>
+        <div class="result-value" id="resultValue"></div>
+        <div class="buttons">
+            <button id="sellBtn">Продать</button>
+            <button id="keepBtn">Оставить</button>
+        </div>
+    </div>
+    
+    <div class="inventory-btn" id="inventoryBtn">🎁</div>
+    
+    <div class="inventory" id="inventory">
+        <div class="inventory-header">
+            <h2>Ваш инвентарь</h2>
+            <button class="close-btn" id="closeInventory">✕</button>
+        </div>
+        <div class="inventory-items" id="inventoryItems">
+            <!-- Предметы будут добавлены через JS -->
+        </div>
+    </div>
+    
     <script>
-        // Extended Telegram WebApp initialization
+        // Инициализация WebApp Telegram
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.BackButton.hide();
         
-        // User data with profile gifts
+        // Данные пользователя
         let userData = {
-            balance: 0,
-            inventory: [],
-            profileGifts: [],
-            tgUserId: tg.initDataUnsafe.user?.id,
-            tgUsername: tg.initDataUnsafe.user?.username
+            balance: 1000, // Начальный баланс (можно получать из бота)
+            inventory: []  // Инвентарь пользователя
         };
         
-        // Telegram Stars packages (in cents)
-        const starsPackages = [
-            { id: "stars_100", amount: 100, price: 100, bonus: 0 },
-            { id: "stars_500", amount: 500, price: 500, bonus: 50 },
-            { id: "stars_1000", amount: 1000, price: 1000, bonus: 150 },
-            { id: "stars_5000", amount: 5000, price: 5000, bonus: 1000 }
-        ];
-        
-        // Extended cases data with probabilities
+        // Типы кейсов
         const cases = [
             {
                 id: 1,
                 name: "Обычный кейс",
                 price: 100,
-                image: "🎁",
+                image: "https://via.placeholder.com/150/333333/FFFFFF?text=Обычный",
                 rewards: [
-                    { id: "sticker_common", name: "Стикерпак", value: 50, image: "🎨", rarity: "common", probability: 40 },
-                    { id: "emoji_common", name: "Эмодзи", value: 30, image: "😊", rarity: "common", probability: 30 },
-                    { id: "bg_uncommon", name: "Фон для видео", value: 80, image: "🎥", rarity: "uncommon", probability: 20 },
-                    { id: "sticker_animated", name: "Анимированный стикер", value: 150, image: "🔄", rarity: "rare", probability: 8 },
-                    { id: "emoji_custom", name: "Персонализированный эмодзи", value: 300, image: "👑", rarity: "epic", probability: 2 }
+                    { name: "Стикерпак", value: 50, image: "🎨", rarity: "common" },
+                    { name: "Эмодзи", value: 30, image: "😊", rarity: "common" },
+                    { name: "Фон для видео", value: 80, image: "🎥", rarity: "uncommon" },
+                    { name: "Анимированный стикер", value: 150, image: "🔄", rarity: "rare" },
+                    { name: "Персонализированный эмодзи", value: 300, image: "👑", rarity: "epic" }
                 ]
             },
-            // Other cases remain similar with updated probabilities...
+            {
+                id: 2,
+                name: "Редкий кейс",
+                price: 300,
+                image: "https://via.placeholder.com/150/5555FF/FFFFFF?text=Редкий",
+                rewards: [
+                    { name: "Фон для видео", value: 80, image: "🎥", rarity: "uncommon" },
+                    { name: "Анимированный стикер", value: 150, image: "🔄", rarity: "rare" },
+                    { name: "Персонализированный эмодзи", value: 300, image: "👑", rarity: "epic" },
+                    { name: "Премиум-стикерпак", value: 500, image: "💎", rarity: "legendary" },
+                    { name: "Эксклюзивный бейдж", value: 1000, image: "🏆", rarity: "legendary" }
+                ]
+            },
+            {
+                id: 3,
+                name: "Эпический кейс",
+                price: 700,
+                image: "https://via.placeholder.com/150/AA00AA/FFFFFF?text=Эпический",
+                rewards: [
+                    { name: "Анимированный стикер", value: 150, image: "🔄", rarity: "rare" },
+                    { name: "Персонализированный эмодзи", value: 300, image: "👑", rarity: "epic" },
+                    { name: "Премиум-стикерпак", value: 500, image: "💎", rarity: "legendary" },
+                    { name: "Эксклюзивный бейдж", value: 1000, image: "🏆", rarity: "legendary" },
+                    { name: "Голосовой подарок", value: 1500, image: "🎤", rarity: "mythic" }
+                ]
+            },
+            {
+                id: 4,
+                name: "Легендарный кейс",
+                price: 1500,
+                image: "https://via.placeholder.com/150/FFAA00/FFFFFF?text=Легендарный",
+                rewards: [
+                    { name: "Премиум-стикерпак", value: 500, image: "💎", rarity: "legendary" },
+                    { name: "Эксклюзивный бейдж", value: 1000, image: "🏆", rarity: "legendary" },
+                    { name: "Голосовой подарок", value: 1500, image: "🎤", rarity: "mythic" },
+                    { name: "Анимированный аватар", value: 2500, image: "👤", rarity: "mythic" },
+                    { name: "Эксклюзивный статус", value: 5000, image: "🌟", rarity: "mythic" }
+                ]
+            }
         ];
         
-        // Initialize with more functionality
+        // Текущий выбранный кейс и выигрыш
+        let currentCase = null;
+        let currentReward = null;
+        
+        // Инициализация приложения
         function init() {
-            loadUserData();
+            updateBalance();
             renderCases();
-            renderStarsPackages();
             setupEventListeners();
             
-            // Show main button if in Telegram
-            if (tg.platform !== "unknown") {
-                tg.MainButton.setText("Мой профиль");
-                tg.MainButton.onClick(showProfile);
-                tg.MainButton.show();
-            }
+            // Загрузка данных пользователя (можно реализовать через бота)
+            // loadUserData();
         }
         
-        // Load user data (simulated - should be from backend)
-        function loadUserData() {
-            // In real app, this would be a request to your backend
-            const savedData = localStorage.getItem(`tgCaseUser_${userData.tgUserId}`);
-            if (savedData) {
-                userData = JSON.parse(savedData);
-            } else {
-                userData.balance = 0;
-                userData.inventory = [];
-                userData.profileGifts = [];
-            }
-            updateBalance();
+        // Обновление баланса на экране
+        function updateBalance() {
+            document.getElementById('balance').textContent = userData.balance;
         }
         
-        // Save user data (simulated - should be to backend)
-        function saveUserData() {
-            localStorage.setItem(`tgCaseUser_${userData.tgUserId}`, JSON.stringify(userData));
-            
-            // In real app, send to your backend:
-            // fetch('/api/save-user', {
-            //   method: 'POST',
-            //   body: JSON.stringify(userData)
-            // });
-        }
-        
-        // Show user profile with gifts
-        function showProfile() {
-            tg.showPopup({
-                title: `Профиль @${userData.tgUsername || 'user'}`,
-                message: `🎖️ Ваши подарки: ${userData.profileGifts.length}\n⭐ Звёзд: ${userData.balance}`,
-                buttons: [
-                    { id: 'addStars', type: 'default', text: 'Пополнить баланс' },
-                    { id: 'close', type: 'cancel' }
-                ]
-            }, (btnId) => {
-                if (btnId === 'addStars') showPaymentModal();
-            });
-            
-            // This would be more detailed in a real app
-        }
-        
-        // Show payment modal for Stars
-        function showPaymentModal() {
-            document.getElementById('paymentModal').style.display = 'flex';
-        }
-        
-        // Hide payment modal
-        function hidePaymentModal() {
-            document.getElementById('paymentModal').style.display = 'none';
-        }
-        
-        // Render Stars packages
-        function renderStarsPackages() {
-            const container = document.getElementById('starsPackages');
+        // Отображение кейсов
+        function renderCases() {
+            const container = document.getElementById('casesContainer');
             container.innerHTML = '';
             
-            starsPackages.forEach(pkg => {
-                const element = document.createElement('div');
-                element.className = 'stars-package';
-                element.innerHTML = `
-                    <div style="font-size: 24px;">${pkg.amount} ⭐</div>
-                    <div>$${(pkg.price / 100).toFixed(2)}</div>
-                    ${pkg.bonus > 0 ? `<div style="color: gold; font-size: 12px;">+${pkg.bonus} бонус</div>` : ''}
+            cases.forEach(caseItem => {
+                const caseElement = document.createElement('div');
+                caseElement.className = 'case';
+                caseElement.innerHTML = `
+                    <div class="case-image" style="background-image: url('${caseItem.image}')"></div>
+                    <div class="case-name">${caseItem.name}</div>
+                    <div class="case-price">${caseItem.price} ★</div>
                 `;
                 
-                element.addEventListener('click', () => {
-                    initiateStarsPurchase(pkg);
+                caseElement.addEventListener('click', () => {
+                    openCase(caseItem);
                 });
                 
-                container.appendChild(element);
+                container.appendChild(caseElement);
             });
         }
         
-        // Initiate Stars purchase (simulated - real implementation uses Telegram Payments)
-        function initiateStarsPurchase(pkg) {
-            tg.showPopup({
-                title: `Купить ${pkg.amount + pkg.bonus} звёзд?`,
-                message: `Вы получите ${pkg.amount} звёзд + ${pkg.bonus} бонусных за $${(pkg.price / 100).toFixed(2)}`,
-                buttons: [
-                    { id: 'confirm', type: 'default', text: 'Купить' },
-                    { id: 'cancel', type: 'cancel' }
-                ]
-            }, (btnId) => {
-                if (btnId === 'confirm') {
-                    // In real app, this would use Telegram Payments:
-                    // tg.openInvoice({
-                    //   currency: 'USD',
-                    //   prices: [{ label: 'Stars', amount: pkg.price }],
-                    //   payload: JSON.stringify({ packageId: pkg.id, userId: userData.tgUserId })
-                    // });
-                    
-                    // Simulate successful purchase
-                    simulateStarsPurchase(pkg);
+        // Открытие кейса
+        function openCase(caseItem) {
+            if (userData.balance < caseItem.price) {
+                alert('Недостаточно звезд для открытия этого кейса!');
+                return;
+            }
+            
+            currentCase = caseItem;
+            
+            // Вычитаем стоимость кейса
+            userData.balance -= caseItem.price;
+            updateBalance();
+            
+            // Показываем рулетку
+            showRoulette(caseItem);
+        }
+        
+        // Показать рулетку
+        function showRoulette(caseItem) {
+            const roulette = document.getElementById('roulette');
+            roulette.innerHTML = '';
+            
+            // Создаем секции рулетки
+            caseItem.rewards.forEach((reward, index) => {
+                const angle = (360 / caseItem.rewards.length) * index;
+                const item = document.createElement('div');
+                item.className = 'roulette-item';
+                item.style.transform = `rotate(${angle}deg)`;
+                item.style.background = getRarityColor(reward.rarity);
+                
+                item.innerHTML = `
+                    <div class="roulette-item-image">${reward.image}</div>
+                `;
+                
+                roulette.appendChild(item);
+            });
+            
+            // Показываем рулетку
+            document.getElementById('rouletteContainer').style.display = 'flex';
+            
+            // Запускаем анимацию вращения
+            setTimeout(() => {
+                spinRoulette(caseItem);
+            }, 500);
+        }
+        
+        // Вращение рулетки
+        function spinRoulette(caseItem) {
+            const roulette = document.getElementById('roulette');
+            const duration = 3000; // 3 секунды
+            const startTime = Date.now();
+            
+            // Выбираем случайный приз (с учетом вероятностей)
+            const weights = {
+                common: 40,
+                uncommon: 30,
+                rare: 15,
+                epic: 10,
+                legendary: 4,
+                mythic: 1
+            };
+            
+            // Вычисляем общий вес
+            let totalWeight = 0;
+            caseItem.rewards.forEach(reward => {
+                totalWeight += weights[reward.rarity] || 1;
+            });
+            
+            // Выбираем случайный приз с учетом весов
+            let random = Math.random() * totalWeight;
+            let weightSum = 0;
+            
+            for (const reward of caseItem.rewards) {
+                weightSum += weights[reward.rarity] || 1;
+                if (random <= weightSum) {
+                    currentReward = reward;
+                    break;
                 }
+            }
+            
+            // Находим индекс приза
+            const rewardIndex = caseItem.rewards.findIndex(r => r === currentReward);
+            const rewardAngle = (360 / caseItem.rewards.length) * rewardIndex;
+            
+            // Анимация вращения
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Замедляем вращение к концу
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                
+                // Количество полных оборотов (5-10)
+                const fullRotations = 5 + Math.random() * 5;
+                
+                // Конечный угол (с учетом полных оборотов)
+                const endAngle = fullRotations * 360 + rewardAngle;
+                
+                // Текущий угол
+                const angle = easeOut * endAngle;
+                
+                roulette.style.transform = `rotate(${-angle}deg)`;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    // Показываем результат
+                    setTimeout(showResult, 1000);
+                }
+            }
+            
+            animate();
+        }
+        
+        // Показать результат
+        function showResult() {
+            document.getElementById('resultName').textContent = currentReward.name;
+            document.getElementById('resultValue').textContent = `Цена: ${currentReward.value} ★`;
+            document.getElementById('resultImage').textContent = currentReward.image;
+            
+            document.getElementById('result').style.display = 'block';
+        }
+        
+        // Получить цвет по редкости
+        function getRarityColor(rarity) {
+            const colors = {
+                common: 'rgba(150, 150, 150, 0.7)',
+                uncommon: 'rgba(100, 200, 100, 0.7)',
+                rare: 'rgba(100, 100, 200, 0.7)',
+                epic: 'rgba(170, 100, 200, 0.7)',
+                legendary: 'rgba(200, 170, 50, 0.7)',
+                mythic: 'rgba(200, 50, 50, 0.7)'
+            };
+            
+            return colors[rarity] || 'rgba(150, 150, 150, 0.7)';
+        }
+        
+        // Настройка обработчиков событий
+        function setupEventListeners() {
+            // Кнопка продажи
+            document.getElementById('sellBtn').addEventListener('click', () => {
+                userData.balance += currentReward.value;
+                updateBalance();
+                
+                // Закрываем рулетку
+                closeRoulette();
+                
+                // Можно отправить данные в бота
+                // sendDataToBot();
+            });
+            
+            // Кнопка оставить
+            document.getElementById('keepBtn').addEventListener('click', () => {
+                // Добавляем предмет в инвентарь
+                userData.inventory.push(currentReward);
+                
+                // Закрываем рулетку
+                closeRoulette();
+                
+                // Можно отправить данные в бота
+                // sendDataToBot();
+            });
+            
+            // Кнопка инвентаря
+            document.getElementById('inventoryBtn').addEventListener('click', () => {
+                showInventory();
+            });
+            
+            // Кнопка закрытия инвентаря
+            document.getElementById('closeInventory').addEventListener('click', () => {
+                hideInventory();
             });
         }
         
-        // Simulate Stars purchase (for demo)
-        function simulateStarsPurchase(pkg) {
-            userData.balance += pkg.amount + pkg.bonus;
-            updateBalance();
-            saveUserData();
-            hidePaymentModal();
-            
-            tg.showAlert(`Вы получили ${pkg.amount + pkg.bonus} ⭐!`);
+        // Закрыть рулетку
+        function closeRoulette() {
+            document.getElementById('rouletteContainer').style.display = 'none';
+            document.getElementById('result').style.display = 'none';
         }
         
-        // Modified keep reward function to add to profile
-        function keepReward() {
-            // Add to profile if it's a profile gift (badge, emoji, etc.)
-            if (currentReward.id.includes('emoji') || currentReward.id.includes('badge')) {
-                userData.profileGifts.push(currentReward);
-                tg.showAlert(`🎉 ${currentReward.name} добавлен в ваш профиль!`);
+        // Показать инвентарь
+        function showInventory() {
+            const container = document.getElementById('inventoryItems');
+            container.innerHTML = '';
+            
+            if (userData.inventory.length === 0) {
+                container.innerHTML = '<p>Ваш инвентарь пуст</p>';
             } else {
-                userData.inventory.push(currentReward);
+                userData.inventory.forEach((item, index) => {
+                    const itemElement = document.createElement('div');
+                    itemElement.className = 'inventory-item';
+                    itemElement.innerHTML = `
+                        <div class="inventory-item-image">${item.image}</div>
+                        <div>${item.name}</div>
+                        <div>${item.value} ★</div>
+                    `;
+                    
+                    container.appendChild(itemElement);
+                });
             }
             
-            saveUserData();
-            closeRoulette();
-            
-            // Refresh main button if it's a profile gift
-            if (currentReward.id.includes('emoji') || currentReward.id.includes('badge')) {
-                tg.MainButton.setText(`Профиль (${userData.profileGifts.length} 🎁)`);
-            }
+            document.getElementById('inventory').style.display = 'flex';
         }
         
-        // Modified sell reward function
-        function sellReward() {
-            userData.balance += currentReward.value;
-            updateBalance();
-            saveUserData();
-            closeRoulette();
-            
-            tg.showAlert(`Вы продали ${currentReward.name} за ${currentReward.value} ⭐`);
+        // Скрыть инвентарь
+        function hideInventory() {
+            document.getElementById('inventory').style.display = 'none';
         }
         
-        // Update setupEventListeners with new handlers
-        function setupEventListeners() {
-            // Previous listeners...
-            
-            document.getElementById('keepBtn').addEventListener('click', keepReward);
-            document.getElementById('sellBtn').addEventListener('click', sellReward);
-            document.getElementById('closePaymentModal').addEventListener('click', hidePaymentModal);
-            
-            // Handle Telegram events
-            tg.onEvent('mainButtonClicked', showProfile);
-            
-            // For real payments you would handle:
-            // tg.onEvent('invoiceClosed', (event) => {
-            //   if (event.status === 'paid') {
-            //     const payload = JSON.parse(event.payload);
-            //     handleSuccessfulPayment(payload);
-            //   }
-            // });
-        }
-        
-        // Initialize when ready
-        if (tg.initDataUnsafe) {
-            init();
-        } else {
-            tg.ready();
-            tg.onEvent('viewportChanged', init);
-        }
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
