@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TG Case Opener</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* Previous CSS remains the same, add these new styles */
+        .profile-gifts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .gift-badge {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .payment-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .payment-content {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 400px;
+        }
+        .stars-packages {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .stars-package {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid gold;
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <!-- Previous HTML remains the same, add these new elements -->
+    <div class="payment-modal" id="paymentModal">
+        <div class="payment-content">
+            <h2>Пополнить баланс</h2>
+            <p>Выберите пакет звёзд:</p>
+            <div class="stars-packages" id="starsPackages">
+                <!-- Packages will be added via JS -->
+            </div>
+            <button id="closePaymentModal">Отмена</button>
+        </div>
+    </div>
+
+    <script>
+        // Extended Telegram WebApp initialization
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.BackButton.hide();
+        
+        // User data with profile gifts
+        let userData = {
+            balance: 0,
+            inventory: [],
+            profileGifts: [],
+            tgUserId: tg.initDataUnsafe.user?.id,
+            tgUsername: tg.initDataUnsafe.user?.username
+        };
+        
+        // Telegram Stars packages (in cents)
+        const starsPackages = [
+            { id: "stars_100", amount: 100, price: 100, bonus: 0 },
+            { id: "stars_500", amount: 500, price: 500, bonus: 50 },
+            { id: "stars_1000", amount: 1000, price: 1000, bonus: 150 },
+            { id: "stars_5000", amount: 5000, price: 5000, bonus: 1000 }
+        ];
+        
+        // Extended cases data with probabilities
+        const cases = [
+            {
+                id: 1,
+                name: "Обычный кейс",
+                price: 100,
+                image: "🎁",
+                rewards: [
+                    { id: "sticker_common", name: "Стикерпак", value: 50, image: "🎨", rarity: "common", probability: 40 },
+                    { id: "emoji_common", name: "Эмодзи", value: 30, image: "😊", rarity: "common", probability: 30 },
+                    { id: "bg_uncommon", name: "Фон для видео", value: 80, image: "🎥", rarity: "uncommon", probability: 20 },
+                    { id: "sticker_animated", name: "Анимированный стикер", value: 150, image: "🔄", rarity: "rare", probability: 8 },
+                    { id: "emoji_custom", name: "Персонализированный эмодзи", value: 300, image: "👑", rarity: "epic", probability: 2 }
+                ]
+            },
+            // Other cases remain similar with updated probabilities...
+        ];
+        
+        // Initialize with more functionality
+        function init() {
+            loadUserData();
+            renderCases();
+            renderStarsPackages();
+            setupEventListeners();
+            
+            // Show main button if in Telegram
+            if (tg.platform !== "unknown") {
+                tg.MainButton.setText("Мой профиль");
+                tg.MainButton.onClick(showProfile);
+                tg.MainButton.show();
+            }
+        }
+        
+        // Load user data (simulated - should be from backend)
+        function loadUserData() {
+            // In real app, this would be a request to your backend
+            const savedData = localStorage.getItem(`tgCaseUser_${userData.tgUserId}`);
+            if (savedData) {
+                userData = JSON.parse(savedData);
+            } else {
+                userData.balance = 0;
+                userData.inventory = [];
+                userData.profileGifts = [];
+            }
+            updateBalance();
+        }
+        
+        // Save user data (simulated - should be to backend)
+        function saveUserData() {
+            localStorage.setItem(`tgCaseUser_${userData.tgUserId}`, JSON.stringify(userData));
+            
+            // In real app, send to your backend:
+            // fetch('/api/save-user', {
+            //   method: 'POST',
+            //   body: JSON.stringify(userData)
+            // });
+        }
+        
+        // Show user profile with gifts
+        function showProfile() {
+            tg.showPopup({
+                title: `Профиль @${userData.tgUsername || 'user'}`,
+                message: `🎖️ Ваши подарки: ${userData.profileGifts.length}\n⭐ Звёзд: ${userData.balance}`,
+                buttons: [
+                    { id: 'addStars', type: 'default', text: 'Пополнить баланс' },
+                    { id: 'close', type: 'cancel' }
+                ]
+            }, (btnId) => {
+                if (btnId === 'addStars') showPaymentModal();
+            });
+            
+            // This would be more detailed in a real app
+        }
+        
+        // Show payment modal for Stars
+        function showPaymentModal() {
+            document.getElementById('paymentModal').style.display = 'flex';
+        }
+        
+        // Hide payment modal
+        function hidePaymentModal() {
+            document.getElementById('paymentModal').style.display = 'none';
+        }
+        
+        // Render Stars packages
+        function renderStarsPackages() {
+            const container = document.getElementById('starsPackages');
+            container.innerHTML = '';
+            
+            starsPackages.forEach(pkg => {
+                const element = document.createElement('div');
+                element.className = 'stars-package';
+                element.innerHTML = `
+                    <div style="font-size: 24px;">${pkg.amount} ⭐</div>
+                    <div>$${(pkg.price / 100).toFixed(2)}</div>
+                    ${pkg.bonus > 0 ? `<div style="color: gold; font-size: 12px;">+${pkg.bonus} бонус</div>` : ''}
+                `;
+                
+                element.addEventListener('click', () => {
+                    initiateStarsPurchase(pkg);
+                });
+                
+                container.appendChild(element);
+            });
+        }
+        
+        // Initiate Stars purchase (simulated - real implementation uses Telegram Payments)
+        function initiateStarsPurchase(pkg) {
+            tg.showPopup({
+                title: `Купить ${pkg.amount + pkg.bonus} звёзд?`,
+                message: `Вы получите ${pkg.amount} звёзд + ${pkg.bonus} бонусных за $${(pkg.price / 100).toFixed(2)}`,
+                buttons: [
+                    { id: 'confirm', type: 'default', text: 'Купить' },
+                    { id: 'cancel', type: 'cancel' }
+                ]
+            }, (btnId) => {
+                if (btnId === 'confirm') {
+                    // In real app, this would use Telegram Payments:
+                    // tg.openInvoice({
+                    //   currency: 'USD',
+                    //   prices: [{ label: 'Stars', amount: pkg.price }],
+                    //   payload: JSON.stringify({ packageId: pkg.id, userId: userData.tgUserId })
+                    // });
+                    
+                    // Simulate successful purchase
+                    simulateStarsPurchase(pkg);
+                }
+            });
+        }
+        
+        // Simulate Stars purchase (for demo)
+        function simulateStarsPurchase(pkg) {
+            userData.balance += pkg.amount + pkg.bonus;
+            updateBalance();
+            saveUserData();
+            hidePaymentModal();
+            
+            tg.showAlert(`Вы получили ${pkg.amount + pkg.bonus} ⭐!`);
+        }
+        
+        // Modified keep reward function to add to profile
+        function keepReward() {
+            // Add to profile if it's a profile gift (badge, emoji, etc.)
+            if (currentReward.id.includes('emoji') || currentReward.id.includes('badge')) {
+                userData.profileGifts.push(currentReward);
+                tg.showAlert(`🎉 ${currentReward.name} добавлен в ваш профиль!`);
+            } else {
+                userData.inventory.push(currentReward);
+            }
+            
+            saveUserData();
+            closeRoulette();
+            
+            // Refresh main button if it's a profile gift
+            if (currentReward.id.includes('emoji') || currentReward.id.includes('badge')) {
+                tg.MainButton.setText(`Профиль (${userData.profileGifts.length} 🎁)`);
+            }
+        }
+        
+        // Modified sell reward function
+        function sellReward() {
+            userData.balance += currentReward.value;
+            updateBalance();
+            saveUserData();
+            closeRoulette();
+            
+            tg.showAlert(`Вы продали ${currentReward.name} за ${currentReward.value} ⭐`);
+        }
+        
+        // Update setupEventListeners with new handlers
+        function setupEventListeners() {
+            // Previous listeners...
+            
+            document.getElementById('keepBtn').addEventListener('click', keepReward);
+            document.getElementById('sellBtn').addEventListener('click', sellReward);
+            document.getElementById('closePaymentModal').addEventListener('click', hidePaymentModal);
+            
+            // Handle Telegram events
+            tg.onEvent('mainButtonClicked', showProfile);
+            
+            // For real payments you would handle:
+            // tg.onEvent('invoiceClosed', (event) => {
+            //   if (event.status === 'paid') {
+            //     const payload = JSON.parse(event.payload);
+            //     handleSuccessfulPayment(payload);
+            //   }
+            // });
+        }
+        
+        // Initialize when ready
+        if (tg.initDataUnsafe) {
+            init();
+        } else {
+            tg.ready();
+            tg.onEvent('viewportChanged', init);
+        }
+    </script>
+</body>
+</html>
