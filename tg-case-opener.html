@@ -73,9 +73,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 48px;
             position: relative;
             overflow: hidden;
+        }
+        
+        .case-image img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
         }
         
         .case-image::after {
@@ -150,8 +155,10 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
-        .roulette-item-image {
-            font-size: 50px;
+        .roulette-item img {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
             margin-bottom: 8px;
             transition: transform 0.3s;
         }
@@ -176,8 +183,9 @@
         }
         
         .result-image {
-            font-size: 60px;
-            margin-bottom: 12px;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 12px;
             animation: bounce 0.5s alternate infinite;
         }
         
@@ -222,16 +230,19 @@
         }
         
         /* Rarity Colors */
-        .common { color: #a1a1a1; }
-        .uncommon { color: #4CAF50; }
-        .rare { color: #2196F3; }
-        .epic { color: #9C27B0; }
-        .legendary { color: #FF9800; }
-        .mythic { color: #F44336; animation: glow 1.5s infinite alternate; }
+        .common { border-color: #a1a1a1; }
+        .uncommon { border-color: #4CAF50; }
+        .rare { border-color: #2196F3; }
+        .epic { border-color: #9C27B0; }
+        .legendary { border-color: #FF9800; }
+        .mythic { 
+            border-color: #F44336; 
+            animation: glow 1.5s infinite alternate;
+        }
         
         @keyframes glow {
-            from { text-shadow: 0 0 5px currentColor; }
-            to { text-shadow: 0 0 15px currentColor; }
+            from { box-shadow: 0 0 5px #F44336; }
+            to { box-shadow: 0 0 15px #F44336; }
         }
         
         /* Floating Action Button */
@@ -251,6 +262,20 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
             z-index: 100;
         }
+        
+        .rarity-label {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-top: 4px;
+        }
+        
+        .rarity-common { background: #a1a1a1; }
+        .rarity-uncommon { background: #4CAF50; }
+        .rarity-rare { background: #2196F3; }
+        .rarity-epic { background: #9C27B0; }
+        .rarity-legendary { background: #FF9800; }
+        .rarity-mythic { background: #F44336; }
     </style>
 </head>
 <body>
@@ -277,7 +302,7 @@
     </div>
     
     <div class="result-popup" id="resultPopup">
-        <div class="result-image" id="resultImage"></div>
+        <img class="result-image" id="resultImage" src="" alt="">
         <div class="result-name" id="resultName"></div>
         <div class="result-value" id="resultValue"></div>
         <div class="action-buttons">
@@ -294,27 +319,99 @@
         tg.expand();
         tg.enableClosingConfirmation();
         
-        // Real Telegram Premium Gifts data (2024)
+        // Real Telegram Premium Gifts with image URLs
         const TELEGRAM_GIFTS = {
             profile_badges: [
-                { id: "badge_1", name: "⭐ Premium Badge", image: "⭐", value: 100, rarity: "common" },
-                { id: "badge_2", name: "🎖️ Premium Star", image: "🎖️", value: 250, rarity: "uncommon" },
-                { id: "badge_3", name: "🏆 Champion Badge", image: "🏆", value: 500, rarity: "rare" }
+                { 
+                    id: "badge_1", 
+                    name: "Premium Badge", 
+                    image: "https://raw.githubusercontent.com/telegramdesktop/tdesktop/dev/Telegram/Resources/art/badge_premium.png",
+                    value: 100, 
+                    rarity: "common" 
+                },
+                { 
+                    id: "badge_2", 
+                    name: "Premium Star", 
+                    image: "https://raw.githubusercontent.com/telegramdesktop/tdesktop/dev/Telegram/Resources/art/badge_premium_star.png",
+                    value: 250, 
+                    rarity: "uncommon" 
+                },
+                { 
+                    id: "badge_3", 
+                    name: "Champion Badge", 
+                    image: "https://raw.githubusercontent.com/telegramdesktop/tdesktop/dev/Telegram/Resources/art/badge_champion.png",
+                    value: 500, 
+                    rarity: "rare" 
+                }
             ],
             emoji_statuses: [
-                { id: "emoji_1", name: "😊 Smile Status", image: "😊", value: 300, rarity: "common" },
-                { id: "emoji_2", name: "🔥 Fire Status", image: "🔥", value: 600, rarity: "uncommon" },
-                { id: "emoji_3", name: "🌟 Star Status", image: "🌟", value: 1200, rarity: "rare" }
+                { 
+                    id: "emoji_1", 
+                    name: "Smile Status", 
+                    image: "https://raw.githubusercontent.com/telegramdesktop/tdesktop/dev/Telegram/Resources/art/emoji_status_smile.png",
+                    value: 300, 
+                    rarity: "common" 
+                },
+                { 
+                    id: "emoji_2", 
+                    name: "Fire Status", 
+                    image: "https://raw.githubusercontent.com/telegramdesktop/tdesktop/dev/Telegram/Resources/art/emoji_status_fire.png",
+                    value: 600, 
+                    rarity: "uncommon" 
+                },
+                { 
+                    id: "emoji_3", 
+                    name: "Star Status", 
+                    image: "https://raw.githubusercontent.com/telegramdesktop/tdesktop/dev/Telegram/Resources/art/emoji_status_star.png",
+                    value: 1200, 
+                    rarity: "rare" 
+                }
             ],
             animated_emojis: [
-                { id: "anim_1", name: "✨ Sparkles", image: "✨", value: 400, rarity: "uncommon" },
-                { id: "anim_2", name: "🎉 Celebration", image: "🎉", value: 800, rarity: "rare" },
-                { id: "anim_3", name: "💫 Shooting Star", image: "💫", value: 1500, rarity: "epic" }
+                { 
+                    id: "anim_1", 
+                    name: "Sparkles", 
+                    image: "https://raw.githubusercontent.com/telegramdesktop/tdesktop/dev/Telegram/Resources/art/emoji_anim_sparkles.png",
+                    value: 400, 
+                    rarity: "uncommon" 
+                },
+                { 
+                    id: "anim_2", 
+                    name: "Celebration", 
+                    image: "https://raw.githubusercontent.com/telegramdesktop/tdesktop/dev/Telegram/Resources/art/emoji_anim_celebration.png",
+                    value: 800, 
+                    rarity: "rare" 
+                },
+                { 
+                    id: "anim_3", 
+                    name: "Shooting Star", 
+                    image: "https://raw.githubusercontent.com/telegramdesktop/tdesktop/dev/Telegram/Resources/art/emoji_anim_shooting_star.png",
+                    value: 1500, 
+                    rarity: "epic" 
+                }
             ],
             premium_stickers: [
-                { id: "sticker_1", name: "😺 Cat Pack", image: "😺", value: 200, rarity: "common" },
-                { id: "sticker_2", name: "🦊 Fox Pack", image: "🦊", value: 400, rarity: "uncommon" },
-                { id: "sticker_3", name: "🐉 Dragon Pack", image: "🐉", value: 1000, rarity: "rare" }
+                { 
+                    id: "sticker_1", 
+                    name: "Cat Pack", 
+                    image: "https://raw.githubusercontent.com/telegramdesktop/tdesktop/dev/Telegram/Resources/art/sticker_cat.png",
+                    value: 200, 
+                    rarity: "common" 
+                },
+                { 
+                    id: "sticker_2", 
+                    name: "Fox Pack", 
+                    image: "https://raw.githubusercontent.com/telegramdesktop/tdesktop/dev/Telegram/Resources/art/sticker_fox.png",
+                    value: 400, 
+                    rarity: "uncommon" 
+                },
+                { 
+                    id: "sticker_3", 
+                    name: "Dragon Pack", 
+                    image: "https://raw.githubusercontent.com/telegramdesktop/tdesktop/dev/Telegram/Resources/art/sticker_dragon.png",
+                    value: 1000, 
+                    rarity: "rare" 
+                }
             ]
         };
         
@@ -324,7 +421,7 @@
                 id: "basic",
                 name: "Basic Case",
                 price: 100,
-                image: "📦",
+                image: "https://raw.githubusercontent.com/telegramdesktop/tdesktop/dev/Telegram/Resources/art/case_basic.png",
                 rewards: [
                     ...TELEGRAM_GIFTS.profile_badges,
                     ...TELEGRAM_GIFTS.premium_stickers
@@ -335,7 +432,7 @@
                 id: "premium",
                 name: "Premium Case",
                 price: 500,
-                image: "💎",
+                image: "https://raw.githubusercontent.com/telegramdesktop/tdesktop/dev/Telegram/Resources/art/case_premium.png",
                 rewards: [
                     ...TELEGRAM_GIFTS.emoji_statuses,
                     ...TELEGRAM_GIFTS.animated_emojis,
@@ -348,12 +445,24 @@
                 id: "exclusive",
                 name: "Exclusive Case",
                 price: 1000,
-                image: "🎁",
+                image: "https://raw.githubusercontent.com/telegramdesktop/tdesktop/dev/Telegram/Resources/art/case_exclusive.png",
                 rewards: [
                     TELEGRAM_GIFTS.emoji_statuses[2],
                     TELEGRAM_GIFTS.animated_emojis[2],
-                    { id: "excl_1", name: "💎 Diamond Status", image: "💎", value: 5000, rarity: "legendary" },
-                    { id: "excl_2", name: "👑 Royal Badge", image: "👑", value: 10000, rarity: "mythic" }
+                    { 
+                        id: "excl_1", 
+                        name: "Diamond Status", 
+                        image: "https://raw.githubusercontent.com/telegramdesktop/tdesktop/dev/Telegram/Resources/art/emoji_status_diamond.png",
+                        value: 5000, 
+                        rarity: "legendary" 
+                    },
+                    { 
+                        id: "excl_2", 
+                        name: "Royal Badge", 
+                        image: "https://raw.githubusercontent.com/telegramdesktop/tdesktop/dev/Telegram/Resources/art/badge_royal.png",
+                        value: 10000, 
+                        rarity: "mythic" 
+                    }
                 ],
                 probabilities: [20, 30, 30, 20] // Rare to Mythic
             }
@@ -407,7 +516,9 @@
                 const caseElement = document.createElement('div');
                 caseElement.className = 'case';
                 caseElement.innerHTML = `
-                    <div class="case-image">${caseItem.image}</div>
+                    <div class="case-image">
+                        <img src="${caseItem.image}" alt="${caseItem.name}">
+                    </div>
                     <div class="case-info">
                         <div class="case-name">${caseItem.name}</div>
                         <div class="case-price">
@@ -467,8 +578,9 @@
                 const item = document.createElement('div');
                 item.className = 'roulette-item';
                 item.innerHTML = `
-                    <div class="roulette-item-image ${reward.rarity}">${reward.image}</div>
+                    <img src="${reward.image}" alt="${reward.name}" class="${reward.rarity}">
                     <div>${reward.value}⭐</div>
+                    <div class="rarity-label rarity-${reward.rarity}">${reward.rarity}</div>
                 `;
                 track.appendChild(item);
             }
@@ -504,7 +616,7 @@
             currentReward = selectedReward || caseItem.rewards[0];
             
             // Find position of the selected reward in the track
-            const rewardIndex = Math.floor(itemsCount * 0.7); // Stop at 70% of the track
+            const rewardIndex = Math.floor(50 * 0.7); // Stop at 70% of the track
             const itemWidth = 150; // Approximate item width
             
             // Animation function
@@ -542,8 +654,9 @@
             const value = document.getElementById('resultValue');
             
             // Set reward data
-            image.className = `result-image ${currentReward.rarity}`;
-            image.textContent = currentReward.image;
+            popup.className = `result-popup ${currentReward.rarity}`;
+            image.src = currentReward.image;
+            image.alt = currentReward.name;
             name.textContent = currentReward.name;
             value.textContent = `Value: ${currentReward.value} ⭐`;
             
