@@ -3,297 +3,382 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TG Case Simulator</title>
+    <title>Telegram Gift Cases</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        :root {
+            --tg-theme-bg-color: #18222d;
+            --tg-theme-text-color: #ffffff;
+            --tg-theme-hint-color: #b1c3d5;
+            --tg-theme-link-color: #5ac8fb;
+            --tg-theme-button-color: #2ea6ff;
+            --tg-theme-button-text-color: #ffffff;
+            --tg-theme-secondary-bg-color: #131415;
+        }
+        
         body {
-            font-family: 'Arial', sans-serif;
-            background: #1a1a2e;
-            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
             margin: 0;
             padding: 0;
-            overflow-x: hidden;
+            line-height: 1.4;
         }
         
         .container {
             max-width: 100%;
-            padding: 15px;
+            padding: 12px;
         }
         
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
+            padding: 8px 0;
         }
         
         .balance {
-            background: rgba(255, 215, 0, 0.2);
-            padding: 8px 15px;
-            border-radius: 20px;
+            background: rgba(83, 171, 227, 0.15);
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 15px;
+            font-weight: 500;
             display: flex;
             align-items: center;
-            font-weight: bold;
+            gap: 4px;
         }
         
-        .cases-container {
-            display: flex;
-            gap: 15px;
-            overflow-x: auto;
-            padding-bottom: 10px;
-            scrollbar-width: none;
-        }
-        
-        .cases-container::-webkit-scrollbar {
-            display: none;
+        .cases-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
         }
         
         .case {
-            min-width: 150px;
-            background: linear-gradient(135deg, #2a2a4a, #1e1e3a);
-            border-radius: 15px;
-            padding: 15px;
-            text-align: center;
-            cursor: pointer;
-            transition: transform 0.3s;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            flex-shrink: 0;
+            background: var(--tg-theme-secondary-bg-color);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s;
         }
         
-        .case:hover {
-            transform: scale(1.05);
+        .case:active {
+            transform: scale(0.98);
         }
         
         .case-image {
-            width: 100%;
-            height: 100px;
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-            margin-bottom: 10px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .case-image::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+        }
+        
+        .case-info {
+            padding: 12px;
         }
         
         .case-name {
-            font-weight: bold;
-            margin-bottom: 5px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            font-size: 15px;
         }
         
         .case-price {
-            color: gold;
+            color: #FFD700;
             font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
         
-        .roulette-container {
+        /* Roulette Styles */
+        .roulette-overlay {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            right: 0;
+            bottom: 0;
             background: rgba(0, 0, 0, 0.9);
-            z-index: 100;
+            z-index: 1000;
             flex-direction: column;
             align-items: center;
             justify-content: center;
         }
         
-        .roulette {
+        .roulette-container {
             width: 100%;
-            height: 150px;
+            height: 180px;
             position: relative;
             overflow: hidden;
-            margin-bottom: 30px;
+            margin: 20px 0;
         }
         
-        .roulette-items {
+        .roulette-track {
             display: flex;
             position: absolute;
-            left: 0;
-            top: 0;
             height: 100%;
-            transition-timing-function: cubic-bezier(0.1, 0.8, 0.2, 1);
+            transition-timing-function: cubic-bezier(0.17, 0.67, 0.21, 0.99);
         }
         
         .roulette-item {
-            width: 120px;
+            width: 140px;
             height: 100%;
             margin: 0 5px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
+            background: var(--tg-theme-secondary-bg-color);
+            border-radius: 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .roulette-item-image {
-            font-size: 40px;
-            margin-bottom: 10px;
+            font-size: 50px;
+            margin-bottom: 8px;
+            transition: transform 0.3s;
         }
         
-        .result {
+        /* Result Popup */
+        .result-popup {
             display: none;
-            text-align: center;
-            background: rgba(0, 0, 0, 0.7);
+            background: var(--tg-theme-secondary-bg-color);
+            border-radius: 16px;
             padding: 20px;
-            border-radius: 15px;
-            max-width: 80%;
-            border: 2px solid gold;
+            width: 80%;
+            max-width: 300px;
+            text-align: center;
+            border: 2px solid;
+            animation: pulseBorder 2s infinite;
+        }
+        
+        @keyframes pulseBorder {
+            0% { border-color: rgba(255, 215, 0, 0.5); }
+            50% { border-color: rgba(255, 215, 0, 1); }
+            100% { border-color: rgba(255, 215, 0, 0.5); }
         }
         
         .result-image {
             font-size: 60px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
+            animation: bounce 0.5s alternate infinite;
+        }
+        
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-10px); }
         }
         
         .result-name {
-            font-size: 22px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: gold;
+            font-weight: 500;
+            font-size: 18px;
+            margin-bottom: 6px;
         }
         
         .result-value {
-            margin-bottom: 20px;
+            color: #FFD700;
+            margin-bottom: 16px;
+            font-size: 15px;
         }
         
-        .buttons {
+        .action-buttons {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             justify-content: center;
         }
         
-        button {
-            background: linear-gradient(135deg, #6e45e2, #88d3ce);
-            color: white;
+        .tg-button {
+            background: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
             border: none;
-            padding: 10px 20px;
+            padding: 10px 16px;
             border-radius: 10px;
+            font-weight: 500;
+            font-size: 15px;
+            flex: 1;
             cursor: pointer;
-            font-weight: bold;
-            transition: transform 0.2s;
         }
         
-        button:hover {
-            transform: scale(1.05);
+        .tg-button-secondary {
+            background: var(--tg-theme-secondary-bg-color);
+            color: var(--tg-theme-text-color);
         }
         
-        .inventory-btn {
+        /* Rarity Colors */
+        .common { color: #a1a1a1; }
+        .uncommon { color: #4CAF50; }
+        .rare { color: #2196F3; }
+        .epic { color: #9C27B0; }
+        .legendary { color: #FF9800; }
+        .mythic { color: #F44336; animation: glow 1.5s infinite alternate; }
+        
+        @keyframes glow {
+            from { text-shadow: 0 0 5px currentColor; }
+            to { text-shadow: 0 0 15px currentColor; }
+        }
+        
+        /* Floating Action Button */
+        .fab {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(106, 90, 205, 0.8);
-            width: 50px;
-            height: 50px;
+            bottom: 16px;
+            right: 16px;
+            width: 56px;
+            height: 56px;
             border-radius: 50%;
+            background: var(--tg-theme-button-color);
+            color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
-            cursor: pointer;
-            z-index: 10;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 100;
         }
-        
-        .rarity-common { color: #b0b0b0; }
-        .rarity-uncommon { color: #4caf50; }
-        .rarity-rare { color: #2196f3; }
-        .rarity-epic { color: #9c27b0; }
-        .rarity-legendary { color: #ff9800; }
-        .rarity-mythic { color: #f44336; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎁 Case Simulator</h1>
+            <h1>Telegram Gifts</h1>
             <div class="balance">
                 <span>⭐</span>
-                <span id="balance">1000</span>
+                <span id="balance">0</span>
             </div>
         </div>
         
-        <div class="cases-container" id="casesContainer">
-            <!-- Cases will be added via JS -->
+        <div class="cases-grid" id="casesGrid">
+            <!-- Cases will be inserted here -->
         </div>
     </div>
     
-    <div class="roulette-container" id="rouletteContainer">
-        <div class="roulette">
-            <div class="roulette-items" id="rouletteItems">
-                <!-- Roulette items will be added via JS -->
+    <div class="roulette-overlay" id="rouletteOverlay">
+        <div class="roulette-container">
+            <div class="roulette-track" id="rouletteTrack">
+                <!-- Roulette items will be inserted here -->
             </div>
         </div>
     </div>
     
-    <div class="result" id="result">
+    <div class="result-popup" id="resultPopup">
         <div class="result-image" id="resultImage"></div>
         <div class="result-name" id="resultName"></div>
         <div class="result-value" id="resultValue"></div>
-        <div class="buttons">
-            <button id="sellBtn">Продать</button>
-            <button id="keepBtn">В инвентарь</button>
+        <div class="action-buttons">
+            <button class="tg-button" id="sellBtn">Sell</button>
+            <button class="tg-button tg-button-secondary" id="keepBtn">Keep</button>
         </div>
     </div>
     
-    <div class="inventory-btn" id="inventoryBtn">🎒</div>
+    <div class="fab" id="inventoryBtn">🎁</div>
     
     <script>
-        // Initialize Telegram WebApp
+        // Telegram WebApp initialization
         const tg = window.Telegram.WebApp;
         tg.expand();
+        tg.enableClosingConfirmation();
+        
+        // Real Telegram Premium Gifts data (2024)
+        const TELEGRAM_GIFTS = {
+            profile_badges: [
+                { id: "badge_1", name: "⭐ Premium Badge", image: "⭐", value: 100, rarity: "common" },
+                { id: "badge_2", name: "🎖️ Premium Star", image: "🎖️", value: 250, rarity: "uncommon" },
+                { id: "badge_3", name: "🏆 Champion Badge", image: "🏆", value: 500, rarity: "rare" }
+            ],
+            emoji_statuses: [
+                { id: "emoji_1", name: "😊 Smile Status", image: "😊", value: 300, rarity: "common" },
+                { id: "emoji_2", name: "🔥 Fire Status", image: "🔥", value: 600, rarity: "uncommon" },
+                { id: "emoji_3", name: "🌟 Star Status", image: "🌟", value: 1200, rarity: "rare" }
+            ],
+            animated_emojis: [
+                { id: "anim_1", name: "✨ Sparkles", image: "✨", value: 400, rarity: "uncommon" },
+                { id: "anim_2", name: "🎉 Celebration", image: "🎉", value: 800, rarity: "rare" },
+                { id: "anim_3", name: "💫 Shooting Star", image: "💫", value: 1500, rarity: "epic" }
+            ],
+            premium_stickers: [
+                { id: "sticker_1", name: "😺 Cat Pack", image: "😺", value: 200, rarity: "common" },
+                { id: "sticker_2", name: "🦊 Fox Pack", image: "🦊", value: 400, rarity: "uncommon" },
+                { id: "sticker_3", name: "🐉 Dragon Pack", image: "🐉", value: 1000, rarity: "rare" }
+            ]
+        };
+        
+        // Cases with real Telegram gifts
+        const CASES = [
+            {
+                id: "basic",
+                name: "Basic Case",
+                price: 100,
+                image: "📦",
+                rewards: [
+                    ...TELEGRAM_GIFTS.profile_badges,
+                    ...TELEGRAM_GIFTS.premium_stickers
+                ],
+                probabilities: [40, 30, 20, 10] // Common to Rare
+            },
+            {
+                id: "premium",
+                name: "Premium Case",
+                price: 500,
+                image: "💎",
+                rewards: [
+                    ...TELEGRAM_GIFTS.emoji_statuses,
+                    ...TELEGRAM_GIFTS.animated_emojis,
+                    TELEGRAM_GIFTS.profile_badges[2],
+                    TELEGRAM_GIFTS.premium_stickers[2]
+                ],
+                probabilities: [30, 35, 25, 10] // Uncommon to Epic
+            },
+            {
+                id: "exclusive",
+                name: "Exclusive Case",
+                price: 1000,
+                image: "🎁",
+                rewards: [
+                    TELEGRAM_GIFTS.emoji_statuses[2],
+                    TELEGRAM_GIFTS.animated_emojis[2],
+                    { id: "excl_1", name: "💎 Diamond Status", image: "💎", value: 5000, rarity: "legendary" },
+                    { id: "excl_2", name: "👑 Royal Badge", image: "👑", value: 10000, rarity: "mythic" }
+                ],
+                probabilities: [20, 30, 30, 20] // Rare to Mythic
+            }
+        ];
         
         // User data
         let userData = {
-            balance: 1000,
+            balance: 500,
             inventory: [],
             tgUserId: tg.initDataUnsafe?.user?.id || Math.floor(Math.random() * 1000000)
         };
         
-        // Cases data with probabilities
-        const cases = [
-            {
-                id: 1,
-                name: "Обычный кейс",
-                price: 100,
-                image: "📦",
-                rewards: [
-                    { id: "sticker1", name: "Обычный стикер", value: 50, image: "😀", rarity: "common", probability: 50 },
-                    { id: "emoji1", name: "Набор эмодзи", value: 80, image: "😎", rarity: "uncommon", probability: 30 },
-                    { id: "bg1", name: "Фон профиля", value: 150, image: "🎨", rarity: "rare", probability: 15 },
-                    { id: "badge1", name: "Бейдж", value: 300, image: "🛡️", rarity: "epic", probability: 4 },
-                    { id: "vip1", name: "VIP-статус", value: 1000, image: "👑", rarity: "legendary", probability: 1 }
-                ]
-            },
-            {
-                id: 2,
-                name: "Премиум кейс",
-                price: 500,
-                image: "💎",
-                rewards: [
-                    { id: "sticker2", name: "Анимированный стикер", value: 200, image: "✨", rarity: "uncommon", probability: 40 },
-                    { id: "emoji2", name: "Эксклюзивные эмодзи", value: 300, image: "🔥", rarity: "rare", probability: 30 },
-                    { id: "bg2", name: "Анимированный фон", value: 500, image: "🌀", rarity: "epic", probability: 20 },
-                    { id: "badge2", name: "Золотой бейдж", value: 1000, image: "🏆", rarity: "legendary", probability: 9 },
-                    { id: "vip2", name: "Премиум-статус", value: 5000, image: "💎", rarity: "mythic", probability: 1 }
-                ]
-            }
-        ];
-        
-        // Current case and reward
+        // Game state
         let currentCase = null;
         let currentReward = null;
-        let spinning = false;
+        let isSpinning = false;
         
-        // Initialize app
+        // Initialize the app
         function init() {
             loadUserData();
             renderCases();
             setupEventListeners();
             
             if (tg.platform !== "unknown") {
-                tg.MainButton.setText("Мой профиль");
+                tg.MainButton.setText("My Profile");
                 tg.MainButton.onClick(showProfile);
                 tg.MainButton.show();
             }
@@ -301,7 +386,7 @@
         
         // Load user data
         function loadUserData() {
-            const savedData = localStorage.getItem(`tgCaseUser_${userData.tgUserId}`);
+            const savedData = localStorage.getItem(`tgGiftsUser_${userData.tgUserId}`);
             if (savedData) {
                 userData = JSON.parse(savedData);
                 updateBalance();
@@ -310,35 +395,40 @@
         
         // Save user data
         function saveUserData() {
-            localStorage.setItem(`tgCaseUser_${userData.tgUserId}`, JSON.stringify(userData));
+            localStorage.setItem(`tgGiftsUser_${userData.tgUserId}`, JSON.stringify(userData));
         }
         
-        // Render cases
+        // Render available cases
         function renderCases() {
-            const container = document.getElementById('casesContainer');
+            const container = document.getElementById('casesGrid');
             container.innerHTML = '';
             
-            cases.forEach(caseItem => {
+            CASES.forEach(caseItem => {
                 const caseElement = document.createElement('div');
                 caseElement.className = 'case';
                 caseElement.innerHTML = `
                     <div class="case-image">${caseItem.image}</div>
-                    <div class="case-name">${caseItem.name}</div>
-                    <div class="case-price">${caseItem.price} ⭐</div>
+                    <div class="case-info">
+                        <div class="case-name">${caseItem.name}</div>
+                        <div class="case-price">
+                            <span>${caseItem.price}</span>
+                            <span>⭐</span>
+                        </div>
+                    </div>
                 `;
                 
                 caseElement.addEventListener('click', () => {
-                    if (!spinning) openCase(caseItem);
+                    if (!isSpinning) openCase(caseItem);
                 });
                 
                 container.appendChild(caseElement);
             });
         }
         
-        // Open case
+        // Open selected case
         function openCase(caseItem) {
             if (userData.balance < caseItem.price) {
-                alert('Недостаточно звёзд!');
+                showAlert(`Not enough stars! You need ${caseItem.price} ⭐`);
                 return;
             }
             
@@ -350,112 +440,121 @@
             showRoulette(caseItem);
         }
         
-        // Show roulette
+        // Show roulette animation
         function showRoulette(caseItem) {
-            spinning = true;
-            const container = document.getElementById('rouletteContainer');
-            const itemsContainer = document.getElementById('rouletteItems');
+            isSpinning = true;
+            const overlay = document.getElementById('rouletteOverlay');
+            const track = document.getElementById('rouletteTrack');
             
             // Clear previous items
-            itemsContainer.innerHTML = '';
+            track.innerHTML = '';
             
-            // Create 50 items (for smooth animation)
-            const itemsToShow = 50;
-            const rewards = [];
+            // Generate items for roulette (mix rewards)
+            const itemsCount = 50;
+            const rewardsPool = [];
             
-            // Fill rewards array according to probabilities
-            caseItem.rewards.forEach(reward => {
-                for (let i = 0; i < reward.probability; i++) {
-                    rewards.push(reward);
+            // Fill rewards pool according to probabilities
+            caseItem.rewards.forEach((reward, index) => {
+                const prob = caseItem.probabilities[Math.min(index, caseItem.probabilities.length - 1)];
+                for (let i = 0; i < prob; i++) {
+                    rewardsPool.push(reward);
                 }
             });
             
             // Create roulette items
-            for (let i = 0; i < itemsToShow; i++) {
-                const reward = rewards[Math.floor(Math.random() * rewards.length)];
+            for (let i = 0; i < itemsCount; i++) {
+                const reward = rewardsPool[Math.floor(Math.random() * rewardsPool.length)];
                 const item = document.createElement('div');
                 item.className = 'roulette-item';
                 item.innerHTML = `
-                    <div class="roulette-item-image ${'rarity-' + reward.rarity}">${reward.image}</div>
+                    <div class="roulette-item-image ${reward.rarity}">${reward.image}</div>
                     <div>${reward.value}⭐</div>
                 `;
-                itemsContainer.appendChild(item);
+                track.appendChild(item);
             }
             
             // Show roulette
-            container.style.display = 'flex';
+            overlay.style.display = 'flex';
             
-            // Start spinning
-            setTimeout(() => {
-                spinRoulette(caseItem);
-            }, 500);
+            // Start spinning animation
+            setTimeout(() => spinRoulette(caseItem), 300);
         }
         
-        // Spin roulette
+        // Spin roulette animation
         function spinRoulette(caseItem) {
-            const itemsContainer = document.getElementById('rouletteItems');
-            const duration = 3000; // 3 seconds
+            const track = document.getElementById('rouletteTrack');
+            const duration = 4000; // 4 seconds
             const startTime = Date.now();
             
             // Select random reward (weighted by probability)
             const random = Math.random() * 100;
-            let probabilitySum = 0;
+            let probSum = 0;
+            let selectedReward = null;
             
-            for (const reward of caseItem.rewards) {
-                probabilitySum += reward.probability;
-                if (random <= probabilitySum) {
-                    currentReward = reward;
+            for (let i = 0; i < caseItem.rewards.length; i++) {
+                const prob = caseItem.probabilities[Math.min(i, caseItem.probabilities.length - 1)];
+                probSum += prob;
+                
+                if (random <= probSum) {
+                    selectedReward = caseItem.rewards[i];
                     break;
                 }
             }
             
-            // Find index of the selected reward in the visible items
-            const rewardIndex = Math.floor(Math.random() * 10) + 20; // Land in the middle
-            const itemWidth = 130; // roulette-item width + margin
+            currentReward = selectedReward || caseItem.rewards[0];
             
-            // Calculate target position (center the selected item)
-            const targetPosition = -(rewardIndex * itemWidth) + (window.innerWidth / 2 - itemWidth / 2);
+            // Find position of the selected reward in the track
+            const rewardIndex = Math.floor(itemsCount * 0.7); // Stop at 70% of the track
+            const itemWidth = 150; // Approximate item width
             
             // Animation function
             function animate() {
                 const elapsed = Date.now() - startTime;
                 const progress = Math.min(elapsed / duration, 1);
                 
-                // Easing function
+                // Easing function (starts fast, slows down)
                 const easeOut = 1 - Math.pow(1 - progress, 3);
                 
-                // Calculate current position
-                const distance = -5000 + (easeOut * (5000 + targetPosition));
+                // Calculate distance (start fast, end at selected position)
+                const startSpeed = -5000;
+                const endPosition = -(rewardIndex * itemWidth) + (window.innerWidth / 2 - itemWidth / 2);
+                const distance = startSpeed + (easeOut * (Math.abs(startSpeed) + endPosition));
                 
-                itemsContainer.style.transform = `translateX(${distance}px)`;
+                track.style.transform = `translateX(${distance}px)`;
                 
                 if (progress < 1) {
                     requestAnimationFrame(animate);
                 } else {
                     // Show result after spinning
-                    setTimeout(() => {
-                        showResult();
-                        spinning = false;
-                    }, 500);
+                    setTimeout(showResult, 500);
+                    isSpinning = false;
                 }
             }
             
             animate();
         }
         
-        // Show result
+        // Show won reward
         function showResult() {
-            document.getElementById('resultImage').className = `result-image rarity-${currentReward.rarity}`;
-            document.getElementById('resultImage').textContent = currentReward.image;
-            document.getElementById('resultName').textContent = currentReward.name;
-            document.getElementById('resultValue').textContent = `Цена: ${currentReward.value} ⭐`;
-            document.getElementById('result').style.display = 'block';
+            const popup = document.getElementById('resultPopup');
+            const image = document.getElementById('resultImage');
+            const name = document.getElementById('resultName');
+            const value = document.getElementById('resultValue');
+            
+            // Set reward data
+            image.className = `result-image ${currentReward.rarity}`;
+            image.textContent = currentReward.image;
+            name.textContent = currentReward.name;
+            value.textContent = `Value: ${currentReward.value} ⭐`;
+            
+            // Show popup
+            popup.style.display = 'block';
         }
         
         // Close roulette
         function closeRoulette() {
-            document.getElementById('rouletteContainer').style.display = 'none';
-            document.getElementById('result').style.display = 'none';
+            document.getElementById('rouletteOverlay').style.display = 'none';
+            document.getElementById('resultPopup').style.display = 'none';
         }
         
         // Sell reward
@@ -465,11 +564,7 @@
             saveUserData();
             closeRoulette();
             
-            if (tg.platform !== "unknown") {
-                tg.showAlert(`Вы продали ${currentReward.name} за ${currentReward.value} ⭐`);
-            } else {
-                alert(`Вы продали ${currentReward.name} за ${currentReward.value} ⭐`);
-            }
+            showAlert(`Sold ${currentReward.name} for ${currentReward.value} ⭐`);
         }
         
         // Keep reward
@@ -478,37 +573,48 @@
             saveUserData();
             closeRoulette();
             
-            if (tg.platform !== "unknown") {
-                tg.showAlert(`🎉 ${currentReward.name} добавлен в инвентарь!`);
-            } else {
-                alert(`🎉 ${currentReward.name} добавлен в инвентарь!`);
-            }
+            showAlert(`🎉 ${currentReward.name} added to your inventory!`);
         }
         
         // Show profile
         function showProfile() {
             tg.showPopup({
-                title: `Профиль пользователя`,
-                message: `⭐ Звёзд: ${userData.balance}\n🎁 Предметов: ${userData.inventory.length}`,
+                title: `Your Profile`,
+                message: `⭐ Stars: ${userData.balance}\n🎁 Gifts: ${userData.inventory.length}`,
                 buttons: [
-                    { id: 'addStars', type: 'default', text: 'Пополнить баланс' },
+                    { id: 'buyStars', type: 'default', text: 'Buy Stars' },
                     { id: 'close', type: 'cancel' }
                 ]
             }, (btnId) => {
-                if (btnId === 'addStars') {
-                    if (tg.platform !== "unknown") {
-                        tg.openInvoice({
-                            title: "Пополнение баланса",
-                            description: "Купить звёзды Telegram",
-                            currency: "USD",
-                            prices: [{ label: "100 ⭐", amount: 100 }],
-                            payload: JSON.stringify({ userId: userData.tgUserId, type: "stars" })
-                        });
-                    } else {
-                        alert("В Telegram откройте магазин звёзд");
-                    }
+                if (btnId === 'buyStars') {
+                    openStarsShop();
                 }
             });
+        }
+        
+        // Open stars shop
+        function openStarsShop() {
+            tg.showPopup({
+                title: 'Buy Telegram Stars',
+                message: 'You can buy stars directly in Telegram',
+                buttons: [
+                    { id: 'openShop', type: 'default', text: 'Open Shop' },
+                    { id: 'cancel', type: 'cancel' }
+                ]
+            }, (btnId) => {
+                if (btnId === 'openShop' && tg.platform !== "unknown") {
+                    tg.openTelegramLink('https://t.me/premium?stars');
+                }
+            });
+        }
+        
+        // Show alert
+        function showAlert(message) {
+            if (tg.platform !== "unknown") {
+                tg.showAlert(message);
+            } else {
+                alert(message);
+            }
         }
         
         // Update balance display
@@ -521,24 +627,20 @@
             document.getElementById('sellBtn').addEventListener('click', sellReward);
             document.getElementById('keepBtn').addEventListener('click', keepReward);
             document.getElementById('inventoryBtn').addEventListener('click', () => {
-                // Implement inventory view here
-                alert(`В инвентаре ${userData.inventory.length} предметов`);
+                showAlert(`You have ${userData.inventory.length} gifts in inventory`);
             });
             
             // Handle Telegram events
             if (tg.platform !== "unknown") {
-                tg.onEvent('invoiceClosed', (event) => {
-                    if (event.status === 'paid') {
-                        userData.balance += 100; // Add stars
-                        updateBalance();
-                        saveUserData();
-                        tg.showAlert("Баланс пополнен на 100 ⭐!");
+                tg.onEvent('viewportChanged', (params) => {
+                    if (params.is_state_stable) {
+                        tg.MainButton.show();
                     }
                 });
             }
         }
         
-        // Initialize when ready
+        // Initialize the app
         if (tg.initDataUnsafe) {
             init();
         } else {
